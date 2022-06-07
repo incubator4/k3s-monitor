@@ -1,0 +1,132 @@
+prometheusOperator:
+  admissionWebhooks:
+    patch:
+      image:
+        repository: registry.cn-hangzhou.aliyuncs.com/google_containers/kube-webhook-certgen
+        tag: v1.0.0
+        sha: "23a03c9c381fba54043d0f6148efeaf4c1ca2ed176e43455178b5c5ebf15ad70"
+kube-state-metrics:
+  image:
+    repository: bitnami/kube-state-metrics
+    tag: 2.2.0
+alertmanager:
+  alertmanagerSpec:
+    logLevel: debug
+    alertmanagerConfigSelector:
+      matchLabels:
+        alertmanagerConfig: "true"
+  config:
+    global:
+      resolve_timeout: 5m
+      smtp_hello: localhost
+      smtp_require_tls: true
+      pagerduty_url: https://events.pagerduty.com/v2/enqueue
+      opsgenie_api_url: https://api.opsgenie.com/
+      wechat_api_url: https://qyapi.weixin.qq.com/cgi-bin/
+      victorops_api_url: https://alert.victorops.com/integrations/generic/20131114/alert/
+    route:
+      group_by:
+        - job
+      continue: false
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      routes:
+        - receiver: empty
+          match:
+            alertname: Watchdog
+        - receiver: wechat-example
+    receivers:
+      - name: empty
+      - name: wechat-example
+        wechat_configs:
+          - agent_id: "1000010"
+            api_secret: lYUX6AVShqouZpxk5SySBnx8F88QxilvHNinfCCdEps
+            api_url: https://qyapi.weixin.qq.com/cgi-bin/
+            corp_id: ww3b7876425a1b1eaf
+            send_resolved: true
+            message: '{{ template "wechat.tmpl" . }}'
+            to_party: "1"
+            to_user: "incubator4"
+    templates:
+      - /etc/alertmanager/config/*.tmpl
+  templateFiles:
+    wechat.tmpl: |
+      接收器:{{ .Receiver }}
+      状态:{{ .Status }}
+      {{ range .Alerts }}
+      级别:{{ .Labels.severity }}
+      类型:{{ .Labels.alertname }}
+      主机:{{ .Labels.instance }}
+      标题:{{ .Annotations.summary }}
+      详情:{{ .Annotations.description }}
+      触发:{{ .StartsAt.Format "2006-01-02 15:04:05" }} CST
+      地址:{{ .GeneratorURL }}
+      {{ end }}
+      Alertmanager地址: {{ .ExternalURL }}
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: traefik
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      cert-manager.io/cluster-issuer: letsencrypt
+    hosts:
+      - alertmanager.k3s.incubator4.com
+    tls:
+      - secretName: alertmanager-k3s-certificate
+        hosts:
+          - alertmanager.k3s.incubator4.com
+grafana:
+  persistence:
+    enabled: true
+    type: pvc
+    storageClassName: smb
+    accessModes:
+      - ReadWriteOnce
+    size: 4Gi
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: traefik
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      cert-manager.io/cluster-issuer: letsencrypt
+    hosts:
+      - grafana.k3s.incubator4.com
+    tls:
+      - secretName: grafana-k3s-certificate
+        hosts:
+          - grafana.k3s.incubator4.com
+  additionalDataSources:
+    - name: loki
+      access: direct
+      editable: false
+      jsonData:
+        tlsSkipVerify: true
+      orgId: 1
+      type: prometheus
+      url: http://loki:3100
+      version: 1
+prometheus:
+  ingress:
+    enabled: true
+    annotations:
+      kubernetes.io/ingress.class: traefik
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+      cert-manager.io/cluster-issuer: letsencrypt
+    hosts:
+      - prometheus.k3s.incubator4.com
+    tls:
+      - secretName: prometheus-k3s-certificate
+        hosts:
+          - prometheus.k3s.incubator4.com
+prometheus-node-exporter:
+  tolerations:
+    - operator: Exists
+      key: node-role.kubernetes.io/etcd
+    - operator: Exists
+      key: node-role.kubernetes.io/master
+    - operator: Exists
+      key: node-role.kubernetes.io/control
+  prometheus:
+    monitor:
+      enabled: true

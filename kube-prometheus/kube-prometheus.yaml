@@ -6,7 +6,7 @@ metadata:
 spec:
   destination:
     namespace: monitoring
-    server: 'https://kubernetes.default.svc'
+    server: "https://kubernetes.default.svc"
   source:
     repoURL: https://prometheus-community.github.io/helm-charts
     targetRevision: x.x.x
@@ -14,8 +14,8 @@ spec:
     helm:
       version: v3
       valueFiles:
-      - https://raw.githubusercontent.com/incubator4/k3s-infrastructure/main/values/kube-prometheus.yaml
-  project: ops
+        - https://raw.githubusercontent.com/incubator4/k3s-monitor/main/kube-prometheus/values.yaml
+  project: monitor
   syncPolicy:
     automated:
       prune: true
