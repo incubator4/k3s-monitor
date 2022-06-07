@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus
+  namespace: argo
+spec:
+  destination:
+    namespace: monitoring
+    server: 'https://kubernetes.default.svc'
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    targetRevision: x.x.x
+    chart: kube-prometheus-stack
+    helm:
+      version: v3
+      valueFiles:
+      - https://raw.githubusercontent.com/incubator4/k3s-infrastructure/main/values/kube-prometheus.yaml
+  project: ops
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
