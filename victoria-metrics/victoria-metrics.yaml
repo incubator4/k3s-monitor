@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: victoria-metrics
+  namespace: argo
+spec:
+  destination:
+    namespace: monitoring
+    server: "https://kubernetes.default.svc"
+  source:
+    repoURL: https://victoriametrics.github.io/helm-charts
+    targetRevision: x.x.x
+    chart: victoria-metrics-k8s-stack
+    helm:
+      version: v3
+      valueFiles:
+        - https://raw.githubusercontent.com/incubator4/k3s-monitor/main/victoria-metrics/values.yaml
+  project: monitor
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - ApplyOutOfSyncOnly=true
