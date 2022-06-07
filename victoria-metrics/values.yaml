@@ -101,6 +101,7 @@ vmsingle:
     storage:
       accessModes:
         - ReadWriteOnce
+      storageClassName: openebs-device
       resources:
         requests:
           storage: 20Gi
@@ -540,7 +541,7 @@ grafana:
   persistence:
     enabled: true
     type: pvc
-    storageClassName: nfs-client
+    storageClassName: openebs-device
     accessModes:
       - ReadWriteOnce
     size: 10Gi
