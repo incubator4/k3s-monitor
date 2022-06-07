@@ -540,10 +540,10 @@ grafana:
   persistence:
     enabled: true
     type: pvc
-    storageClassName: smb
+    storageClassName: nfs-client
     accessModes:
       - ReadWriteOnce
-    size: 4Gi
+    size: 10Gi
   ingress:
     enabled: true
     annotations:
